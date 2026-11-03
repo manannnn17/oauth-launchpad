@@ -5,13 +5,13 @@
   "type": "module",
   "main": "server.js",
   "scripts": {
-    "start": "node server.js",
-    "dev": "node --watch server.js",
-    "generate": "node scripts/generate.js",
+    "start": "node --env-file-if-exists=.env server.js",
+    "dev": "node --env-file-if-exists=.env --watch server.js",
+    "generate": "node --env-file-if-exists=.env scripts/generate.js",
     "check": "node scripts/check-guides.js",
     "test": "node scripts/check-guides.js && node scripts/test-agent.js"
   },
-  "engines": { "node": ">=20" },
+  "engines": { "node": ">=22.9" },
   "dependencies": {
     "@anthropic-ai/sdk": "^1.4.0"
   },

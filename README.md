@@ -13,7 +13,7 @@ If an app isn't in the library, a **live agent** researches it in about 2-4 minu
 
 ## Run it
 
-Requires Node 20+.
+Requires Node 22.9+. For live generation, copy `.env.example` to `.env` and add your key (`.env` is gitignored), or set `ANTHROPIC_API_KEY` in your host's environment.
 
 ```bash
 npm install
