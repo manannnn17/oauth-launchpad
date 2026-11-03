@@ -4,7 +4,7 @@ import http from "node:http";
 import { readFileSync, readdirSync, writeFileSync, existsSync, statSync } from "node:fs";
 import { extname, join } from "node:path";
 import { fileURLToPath } from "node:url";
-import { generateGuide, describeApiError } from "./agent/research.js";
+import { generateGuide, describeError, activeProvider, activeModel } from "./agent/index.js";
 import { guideToMarkdown } from "./lib/markdown.js";
 import { managedAuthStatus } from "./lib/managed.js";
 
@@ -86,8 +86,8 @@ async function handleGenerate(req, res) {
     emit({ type: "match", slug: existing.slug, source: existing.source, name: existing.name });
     return res.end();
   }
-  if (!process.env.ANTHROPIC_API_KEY && !process.env.ANTHROPIC_AUTH_TOKEN) {
-    emit({ type: "error", message: "Live generation is disabled: the server has no ANTHROPIC_API_KEY. The curated library still works." });
+  if (!activeProvider()) {
+    emit({ type: "error", message: "Live generation is disabled: the server has no GEMINI_API_KEY or ANTHROPIC_API_KEY. The curated library still works." });
     return res.end();
   }
   if (running >= MAX_CONCURRENT) {
@@ -106,7 +106,7 @@ async function handleGenerate(req, res) {
     emit({ type: "done", slug });
   } catch (err) {
     console.error("Generation failed:", err);
-    emit({ type: "error", message: describeApiError(err) });
+    emit({ type: "error", message: describeError(err) });
   } finally {
     clearInterval(heartbeat);
     running--;
@@ -129,7 +129,7 @@ const server = http.createServer(async (req, res) => {
     if (req.method !== "GET") return send(res, 405, { error: "Method not allowed" });
 
     if (p === "/api/status") {
-      return send(res, 200, { live_generation: Boolean(process.env.ANTHROPIC_API_KEY || process.env.ANTHROPIC_AUTH_TOKEN), model: process.env.AGENT_MODEL || "claude-opus-5-5" });
+      return send(res, 200, { live_generation: Boolean(activeProvider()), provider: activeProvider(), model: activeModel() });
     }
     if (p === "/api/guides") {
       const list = loadAll().map((g) => ({
@@ -163,5 +163,6 @@ const server = http.createServer(async (req, res) => {
 
 server.listen(PORT, () => {
   console.log(`OAuth Launchpad on http://localhost:${PORT}`);
-  if (!process.env.ANTHROPIC_API_KEY && !process.env.ANTHROPIC_AUTH_TOKEN) console.log("No ANTHROPIC_API_KEY - live generation disabled, library still served.");
+  const provider = activeProvider();
+  console.log(provider ? `Live generation: ${provider} (${activeModel()})` : "No GEMINI_API_KEY or ANTHROPIC_API_KEY - live generation disabled, library still served.");
 });

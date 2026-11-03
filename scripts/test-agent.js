@@ -81,3 +81,35 @@ const types = events.map((e) => e.type);
 for (const t of ["phase", "search", "fetch", "probe", "result"]) assert.ok(types.includes(t), `emits ${t}`);
 
 console.log(`agent loop ok - ${events.length} progress events: ${[...new Set(types)].join(", ")}`);
+
+// ---- Gemini provider: stub only the Gemini API, let probes hit the network ----
+const { generateGuideGemini } = await import("../agent/gemini.js");
+process.env.GEMINI_API_KEY = "test-key";
+const realFetch = globalThis.fetch;
+const geminiBodies = [];
+globalThis.fetch = async (url, init) => {
+  if (!String(url).startsWith("https://generativelanguage.googleapis.com/")) return realFetch(url, init);
+  const body = JSON.parse(init.body);
+  geminiBodies.push(body);
+  const research = geminiBodies.length === 1;
+  const candidate = research
+    ? {
+        content: { parts: [{ text: "FACTS:\n- [official] ... https://developers.notion.com/docs/authorization\nPROBE_URLS:\nhttps://accounts.google.com/.well-known/openid-configuration\n" }] },
+        groundingMetadata: { webSearchQueries: ["notion oauth review"], groundingChunks: [{ web: { uri: "https://vertexaisearch.example/x", title: "developers.notion.com" } }] },
+        urlContextMetadata: { urlMetadata: [{ retrievedUrl: "https://developers.notion.com/docs/authorization" }] },
+        finishReason: "STOP",
+      }
+    : { content: { parts: [{ text: JSON.stringify(sample) }] }, finishReason: "STOP" };
+  return new Response(JSON.stringify({ candidates: [candidate] }), { status: 200, headers: { "content-type": "application/json" } });
+};
+const gEvents = [];
+const gemini = await generateGuideGemini("Notion", (e) => gEvents.push(e));
+globalThis.fetch = realFetch;
+assert.equal(geminiBodies.length, 2, "research + structure calls");
+assert.deepEqual(geminiBodies[0].tools, [{ google_search: {} }, { url_context: {} }]);
+assert.ok(geminiBodies[0].systemInstruction.parts[0].text.includes("PROBE_URLS"));
+assert.equal(geminiBodies[1].generationConfig.responseMimeType, "application/json");
+assert.equal(gemini.meta.research_log.probes[0].result.status, 200, "probe ran against the live URL");
+assert.deepEqual(gemini.meta.research_log.searches, ["notion oauth review"]);
+assert.equal(gemini.guide.name, "Notion");
+console.log(`gemini pipeline ok - ${gEvents.length} progress events`);

@@ -18,9 +18,9 @@ const fallbackParams = () =>
     ? {}
     : { betas: ["server-side-fallback-2026-07-01"], fallbacks: "default" };
 
-const today = () => new Date().toISOString().slice(0, 10);
+export const today = () => new Date().toISOString().slice(0, 10);
 
-const RESEARCH_SYSTEM = `You are an integrations researcher helping developers who build AI agents. Their end users will connect a third-party account to the agent via OAuth, so the developer must create an OAuth app with the provider and get it ready (and, where required, approved) for production.
+export const RESEARCH_SYSTEM = `You are an integrations researcher helping developers who build AI agents. Their end users will connect a third-party account to the agent via OAuth, so the developer must create an OAuth app with the provider and get it ready (and, where required, approved) for production.
 
 Your job: investigate ONE provider and produce research notes a guide can be built from. Today is ${today()}.
 
@@ -46,7 +46,7 @@ Finish with research notes in plain text:
 - CONFLICTS: where sources disagree.
 - UNKNOWNS: what you could not establish.`;
 
-const STRUCTURE_SYSTEM = `You turn research notes about a provider's OAuth app setup into a developer guide that matches the provided JSON schema.
+export const STRUCTURE_SYSTEM = `You turn research notes about a provider's OAuth app setup into a developer guide that matches the provided JSON schema.
 
 Rules:
 - Only state what the notes support. If something is unknown, say so in open_questions instead of guessing.

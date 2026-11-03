@@ -1,7 +1,7 @@
 // CLI for the live agent: `npm run generate -- "Zoom"`.
 // Useful as a smoke test of your API key and to pre-generate guides.
 import { writeFileSync } from "node:fs";
-import { generateGuide, describeApiError } from "../agent/research.js";
+import { generateGuide, describeError } from "../agent/index.js";
 
 const query = process.argv.slice(2).join(" ").trim();
 if (!query) {
@@ -21,6 +21,6 @@ try {
   writeFileSync(file, JSON.stringify({ slug, source: "agent", ...guide, ...meta }, null, 2));
   console.log(`\nSaved ${slug} (${guide.access_tier}, difficulty ${guide.difficulty}/5) in ${meta.duration_s}s -> /g/${slug}`);
 } catch (err) {
-  console.error(`Generation failed: ${describeApiError(err)}`);
+  console.error(`Generation failed: ${describeError(err)}`);
   process.exit(1);
 }

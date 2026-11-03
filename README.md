@@ -13,7 +13,7 @@ If an app isn't in the library, a **live agent** researches it in about 2-4 minu
 
 ## Run it
 
-Requires Node 22.9+. For live generation, copy `.env.example` to `.env` and add your key (`.env` is gitignored), or set `ANTHROPIC_API_KEY` in your host's environment.
+Requires Node 22.9+. Live generation needs **one** model key: a Google AI Studio key (`GEMINI_API_KEY`) or a Claude key (`ANTHROPIC_API_KEY`). Copy `.env.example` to `.env` and paste the key after the `=` (`.env` is gitignored), or set it in your host's environment.
 
 ```bash
 npm install
@@ -25,29 +25,27 @@ npm start
 
 Open http://localhost:3000. The library works without any key.
 
-To enable live generation, set a Claude API key. Never commit it.
-
-```bash
-ANTHROPIC_API_KEY=sk-ant-... npm start
-```
 
 Other commands:
 
 ```bash
-npm test                          # schema-validate all guides + offline agent-loop test
+npm test                          # schema-validate all guides + offline tests of both agent providers
 ```
 
 ```bash
 npm run generate -- "Zoom"        # run the agent from the CLI (smoke test / pre-generate)
 ```
 
-**Deploy:** any Node host works (Render, Railway, Fly). Set the build command to `npm install`, the start command to `npm start`, and set `ANTHROPIC_API_KEY` as a secret. Generated guides are written to `data/generated/`. Use a persistent disk if you want them to survive redeploys.
+**Deploy:** any Node host works (Render, Railway, Fly). Set the build command to `npm install`, the start command to `npm start`, and set `GEMINI_API_KEY` (or `ANTHROPIC_API_KEY`) as a secret. Generated guides are written to `data/generated/`. Use a persistent disk if you want them to survive redeploys.
 
 | Env var | Default | Purpose |
 |---|---|---|
-| `ANTHROPIC_API_KEY` | - | Enables live generation |
-| `AGENT_MODEL` | `claude-opus-5-5` | Model for research + structuring |
-| `AGENT_FALLBACKS` | `default` | Server-side refusal fallback (beta). Set to `off` if your account rejects it |
+| `GEMINI_API_KEY` | - | Enables live generation with Gemini (Google AI Studio) |
+| `GEMINI_MODEL` | `gemini-2.5-flash` | Gemini model |
+| `ANTHROPIC_API_KEY` | - | Enables live generation with Claude |
+| `AGENT_MODEL` | `claude-opus-5-5` | Claude model |
+| `AGENT_PROVIDER` | auto | `gemini` or `anthropic`; by default Gemini is used if its key is set |
+| `AGENT_FALLBACKS` | `default` | Claude only: server-side refusal fallback (beta). Set to `off` if your account rejects it |
 | `PORT` | `3000` | |
 
 ## What's in the library
@@ -76,7 +74,11 @@ Six apps were chosen to cover each kind of setup challenge, not just the easy on
 
 ## How the live agent works
 
-`agent/research.js`:
+Two interchangeable providers produce the same guide format (`agent/index.js` picks one from the environment).
+
+**Gemini** (`agent/gemini.js`): (1) one research call with Google Search grounding and URL context, which ends its notes with URLs worth probing; (2) our guarded `probe_url` requests those URLs; (3) a structured-output call (JSON schema) turns notes and probe results into the guide. Search queries and sources read come from the grounding metadata and are shown live.
+
+**Claude** (`agent/research.js`):
 
 1. **Research loop.** Claude Opus 5.5 runs with server-side `web_search` and `web_fetch` plus the client-side `probe_url` tool. It handles `pause_turn` and tool-use turns, and streams progress to the UI as NDJSON. The prompt asks for provider docs first, changelogs for recent changes, and notes tagged by evidence type.
 2. **Structuring pass.** A second call turns the notes and probe results into the guide using JSON-schema structured outputs. Evidence labels must stay faithful: only probes count as `tested`.
