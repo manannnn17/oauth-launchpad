@@ -1,0 +1,88 @@
+{
+  "slug": "notion",
+  "source": "curated",
+  "reviewed_on": "2026-11-03",
+  "name": "Notion",
+  "website": "https://www.notion.so",
+  "category": "Docs & knowledge",
+  "summary": "Self-serve: create a public (OAuth) integration and any workspace can connect immediately - Notion says Marketplace review is not required. The nuance is the permission model: users pick individual pages, so your agent only sees what was shared.",
+  "access_tier": "self_serve",
+  "difficulty": 1,
+  "difficulty_reason": "No approval step; the main design work is handling page-level sharing in your agent UX.",
+  "effort": {
+    "hands_on": "20-30 min",
+    "first_connection": "Same day",
+    "production": "Same day (Marketplace listing optional)",
+    "waiting_on": "Nothing - no review required to authorise other workspaces."
+  },
+  "bottom_line": "Create a public integration in Notion's developer portal with installation scope 'any workspace' (this cannot be changed later). Store both the access and refresh tokens. Design your agent so it tells users to share the right pages in the picker, and offers a re-auth link to add pages later - most 'Notion isn't working' tickets are really 'page not shared'.",
+  "app_type": "Public integration (OAuth) in the Notion developer portal. Internal integrations (single workspace, static token) are only for your own workspace.",
+  "console_url": "https://www.notion.so/profile/integrations",
+  "scope_paths": [
+    { "name": "Read/write pages and databases the user shares", "scopes": ["Read content", "Update content", "Insert content (capabilities)"], "tier": "self_serve", "review": "None", "time_to_production": "Same day" },
+    { "name": "Read user emails", "scopes": ["Read user information including email addresses"], "tier": "self_serve", "review": "None, but shown to the user at consent", "time_to_production": "Same day" },
+    { "name": "Notion Marketplace listing", "scopes": ["Any"], "tier": "review_required", "review": "Listing review, managed separately under Listings", "time_to_production": "Not required for OAuth" }
+  ],
+  "prerequisites": [
+    { "item": "Notion account and workspace", "needed_for": "development", "detail": "Use a dedicated workspace for testing so you can control shared pages." },
+    { "item": "Redirect URI(s)", "needed_for": "development", "detail": "Entered when creating the integration." },
+    { "item": "Decision on installation scope", "needed_for": "development", "detail": "Any workspace vs selected workspaces - cannot be changed after creation." }
+  ],
+  "stages": [
+    {
+      "name": "Create the public integration",
+      "goal": "You have a client ID, client secret and authorisation URL.",
+      "steps": [
+        { "title": "Create a new integration in the developer portal", "owner": "you", "duration": "5 min", "detail": "Choose the public/OAuth type, set installation scope to 'any workspace', and set capabilities (read/update/insert content, user info).", "url": "https://www.notion.so/profile/integrations" },
+        { "title": "Add redirect URIs", "owner": "agent", "duration": "2 min", "detail": "If you register more than one, you must send redirect_uri in the token request.", "url": "https://developers.notion.com/docs/authorization" },
+        { "title": "Copy client ID/secret from the Configuration tab", "owner": "you", "duration": "1 min", "detail": "Store in your secret manager.", "url": "" }
+      ]
+    },
+    {
+      "name": "Wire up and test",
+      "goal": "A test workspace is connected and the agent can read a shared page.",
+      "steps": [
+        { "title": "Implement authorise + token exchange", "owner": "agent", "duration": "15 min", "detail": "Authorise at https://api.notion.com/v1/oauth/authorize (owner=user); exchange the code at the token endpoint with HTTP Basic auth. Persist access_token, refresh_token, bot_id, workspace_id.", "url": "https://developers.notion.com/docs/authorization" },
+        { "title": "Connect and share a page in the picker", "owner": "you", "duration": "3 min", "detail": "Verify the agent sees only shared pages and their children.", "url": "" },
+        { "title": "Test refresh", "owner": "agent", "duration": "5 min", "detail": "grant_type=refresh_token returns a new access AND refresh token - store both.", "url": "" }
+      ]
+    }
+  ],
+  "token_facts": [
+    { "fact": "Refresh", "value": "Token response includes a refresh_token; refreshing returns a new pair" },
+    { "fact": "Access token expiry", "value": "Not stated in the authorisation docs - handle 401 by refreshing" },
+    { "fact": "Access model", "value": "Per-user, per-page: only pages selected in the picker (and their children)" }
+  ],
+  "gotchas": [
+    { "title": "Installation scope is permanent", "detail": "Choosing 'selected workspaces' by mistake means creating a new integration (new client ID) later.", "severity": "high" },
+    { "title": "Agent sees nothing until pages are shared", "detail": "If a user approves but doesn't finish the flow, or picks no pages, the integration has no access. Build an empty-state that sends them back through the picker.", "severity": "high" },
+    { "title": "Per-user authorisations", "detail": "Each user authorises separately and only that user's shared pages are reachable via their token.", "severity": "medium" }
+  ],
+  "blockers": [
+    { "symptom": "object_not_found on a page the user can see", "cause": "Page wasn't shared with the integration in the picker.", "next_step": "Send the user back through authorisation to add pages, or ask them to add the connection on the page." },
+    { "symptom": "invalid_grant on token exchange", "cause": "redirect_uri missing from the token request when several are registered, or code reused.", "next_step": "Include redirect_uri in the token request; codes are single-use." }
+  ],
+  "agent_can": [
+    "Generate redirect URIs and the integration settings",
+    "Write the OAuth, refresh and 'page not shared' handling code",
+    "Draft in-product copy explaining the page picker",
+    "Probe the authorise endpoint and your callback"
+  ],
+  "you_must": [
+    "Sign in to Notion and create the integration",
+    "Pick the installation scope (irreversible)",
+    "Store the client secret"
+  ],
+  "claims": [
+    { "claim": "Authorisation works as soon as client credentials and redirect URI are configured; Marketplace submission/review is not required.", "evidence": "official_docs", "source_url": "https://developers.notion.com/docs/authorization", "note": "Checked 2026-11-03." },
+    { "claim": "Installation scope (any workspace vs selected workspaces) cannot be changed after creation.", "evidence": "official_docs", "source_url": "https://developers.notion.com/docs/authorization", "note": "Checked 2026-11-03." },
+    { "claim": "Token exchange returns access_token and refresh_token; refreshing returns a new pair.", "evidence": "official_docs", "source_url": "https://developers.notion.com/docs/authorization", "note": "Checked 2026-11-03. Access token lifetime is not stated." },
+    { "claim": "The authorise endpoint redirects to app.notion.com/install-integration without validating client_id server-side first.", "evidence": "tested", "source_url": "https://api.notion.com/v1/oauth/authorize", "note": "Probe with an all-zero client_id returned 302 to the install page." },
+    { "claim": "Users choose pages in a picker; sharing a parent grants children.", "evidence": "official_docs", "source_url": "https://developers.notion.com/docs/authorization", "note": "Checked 2026-11-03." }
+  ],
+  "open_questions": [
+    "Access token lifetime is not documented on the authorisation page - confirm by observing expires_in in a real exchange.",
+    "Whether workspace admins can block public integrations on Enterprise plans was not checked."
+  ],
+  "confidence": "high"
+}

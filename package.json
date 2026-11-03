@@ -1,0 +1,19 @@
+{
+  "name": "oauth-launchpad",
+  "version": "1.0.0",
+  "description": "Ready-to-use, evidence-labelled guides for getting a provider OAuth app created and approved - plus an agent that researches any app live.",
+  "type": "module",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js",
+    "generate": "node scripts/generate.js",
+    "check": "node scripts/check-guides.js",
+    "test": "node scripts/check-guides.js && node scripts/test-agent.js"
+  },
+  "engines": { "node": ">=20" },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^1.4.0"
+  },
+  "license": "MIT"
+}

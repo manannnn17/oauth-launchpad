@@ -1,0 +1,283 @@
+{
+  "slug": "slack",
+  "source": "curated",
+  "reviewed_on": "2026-11-03",
+  "name": "Slack",
+  "website": "https://slack.com",
+  "category": "Messaging",
+  "summary": "You can create an app and enable public distribution in an afternoon, with no review. The catch for AI agents: since 29 May 2025, commercially distributed apps that are not in the Slack Marketplace get 1 request/minute (15 messages) on conversations.history and conversations.replies - and the Marketplace requires 10+ active workspaces and a review of up to ~10 weeks.",
+  "access_tier": "self_serve_with_caveats",
+  "difficulty": 3,
+  "difficulty_reason": "OAuth itself is self-serve, but reading message history at useful rates requires Marketplace approval, which has an install threshold and a multi-week review.",
+  "effort": {
+    "hands_on": "45-90 min (app + distribution); 1-2 days to prepare a Marketplace submission",
+    "first_connection": "Same day",
+    "production": "Same day for unlisted distribution (throttled history reads); roughly 2-12 weeks for Marketplace approval",
+    "waiting_on": "Reaching 10 active workspaces, then Slack's preliminary review (up to 10 business days) and functional review (up to 10 weeks)."
+  },
+  "bottom_line": "Create the app from a manifest, request only the scopes you actually use, and activate public distribution so design partners can install it today. If your agent reads channel history or threads, treat the Marketplace as a launch dependency: start recruiting the 10 active workspaces immediately, and design around the 1 req/min limit (cache, use the Events API to receive messages as they arrive) until you are listed.",
+  "app_type": "Slack app with granular bot/user token scopes, created at api.slack.com/apps (optionally from a manifest), then 'Activate Public Distribution'.",
+  "console_url": "https://api.slack.com/apps",
+  "scope_paths": [
+    {
+      "name": "Post messages / respond to mentions",
+      "scopes": [
+        "chat:write",
+        "app_mentions:read"
+      ],
+      "tier": "self_serve",
+      "review": "None for unlisted distribution",
+      "time_to_production": "Same day"
+    },
+    {
+      "name": "Read channel history and threads (typical for agents)",
+      "scopes": [
+        "channels:history",
+        "groups:history",
+        "conversations.history / conversations.replies"
+      ],
+      "tier": "self_serve_with_caveats",
+      "review": "Unlisted: works but limited to 1 req/min, 15 objects. Marketplace review removes the limit.",
+      "time_to_production": "Same day (throttled) / ~2-12 weeks (Marketplace)"
+    },
+    {
+      "name": "Workspace-wide search or admin",
+      "scopes": [
+        "search:read",
+        "admin.*"
+      ],
+      "tier": "partner_gated",
+      "review": "Not accepted in Marketplace per review guide",
+      "time_to_production": "Unlikely to be approved for distributed apps"
+    }
+  ],
+  "prerequisites": [
+    {
+      "item": "Slack workspace for development",
+      "needed_for": "development",
+      "detail": "Create a free workspace you own."
+    },
+    {
+      "item": "HTTPS redirect, events and interactivity URLs",
+      "needed_for": "production",
+      "detail": "Public distribution requires SSL on OAuth redirect and request URLs."
+    },
+    {
+      "item": "10+ active workspaces (used in last 28 days)",
+      "needed_for": "production",
+      "detail": "Hard prerequisite to submit to the Marketplace."
+    },
+    {
+      "item": "Test account, dummy data and demo video",
+      "needed_for": "production",
+      "detail": "Reviewers install the app themselves and need credentials for any third-party service you connect."
+    }
+  ],
+  "stages": [
+    {
+      "name": "Create and configure the app",
+      "goal": "Your dev workspace has the app installed with a bot token.",
+      "steps": [
+        {
+          "title": "Create app from manifest",
+          "owner": "agent",
+          "duration": "10 min",
+          "detail": "An agent can generate the YAML manifest (scopes, redirect URLs, event subscriptions); you paste it at api.slack.com/apps > Create New App > From a manifest.",
+          "url": "https://api.slack.com/apps"
+        },
+        {
+          "title": "Install to your dev workspace",
+          "owner": "you",
+          "duration": "2 min",
+          "detail": "OAuth & Permissions > Install to Workspace.",
+          "url": ""
+        },
+        {
+          "title": "Implement oauth.v2.access exchange",
+          "owner": "agent",
+          "duration": "20 min",
+          "detail": "Authorise at https://slack.com/oauth/v2/authorize; store per-team bot token (and user token if requested). Bot tokens do not expire unless you enable token rotation.",
+          "url": "https://docs.slack.dev/authentication/installing-with-oauth"
+        }
+      ]
+    },
+    {
+      "name": "Distribute (unlisted)",
+      "goal": "Any workspace can install via your Add to Slack link.",
+      "steps": [
+        {
+          "title": "Complete the Manage Distribution checklist",
+          "owner": "you",
+          "duration": "15 min",
+          "detail": "Manage Distribution > Share Your App with Other Workspaces: fix each checklist item (HTTPS URLs etc.), then Activate Public Distribution.",
+          "url": "https://docs.slack.dev/distribution/"
+        },
+        {
+          "title": "Design around Tier 1 history limits",
+          "owner": "agent",
+          "duration": "1-2 h",
+          "detail": "Subscribe to message events and store what you need instead of polling conversations.history; queue history backfills at 1 req/min.",
+          "url": "https://docs.slack.dev/changelog/2025/05/29/rate-limit-changes-for-non-marketplace-apps"
+        }
+      ]
+    },
+    {
+      "name": "Get listed in the Slack Marketplace",
+      "goal": "Full rate limits and a public listing.",
+      "steps": [
+        {
+          "title": "Reach 10 active workspaces",
+          "owner": "you",
+          "duration": "Weeks (depends on your pipeline)",
+          "detail": "Active = used in the past 28 days, on workspaces other than your dev workspace.",
+          "url": ""
+        },
+        {
+          "title": "Prepare submission",
+          "owner": "agent",
+          "duration": "4-8 h",
+          "detail": "Agent drafts scope justifications (only for shipped features), listing copy, test-account instructions and the demo-video shot list. You record the video.",
+          "url": "https://docs.slack.dev/slack-marketplace/slack-marketplace-review-guide"
+        },
+        {
+          "title": "Preliminary review",
+          "owner": "provider",
+          "duration": "Up to 10 business days",
+          "detail": "Listing, docs, scope justifications, installability. Resubmitting resets your queue position.",
+          "url": ""
+        },
+        {
+          "title": "Functional review",
+          "owner": "provider",
+          "duration": "Up to 10 weeks",
+          "detail": "Reviewers test install, OAuth, setup, use and uninstall. Cannot be expedited for a launch date.",
+          "url": ""
+        }
+      ]
+    }
+  ],
+  "token_facts": [
+    {
+      "fact": "Bot token lifetime",
+      "value": "Never expires unless token rotation is enabled (then 12h access token + single-use refresh token)"
+    },
+    {
+      "fact": "conversations.history / replies (unlisted, new installs since 29 May 2025)",
+      "value": "1 request/minute, max 15 objects per call"
+    },
+    {
+      "fact": "Same methods for internal apps",
+      "value": "50+ requests/minute, up to 1,000 objects"
+    },
+    {
+      "fact": "Marketplace apps",
+      "value": "No change to rate limits"
+    }
+  ],
+  "gotchas": [
+    {
+      "title": "History rate limit for unlisted apps",
+      "detail": "Applies to new installs of unlisted apps since 29 May 2025. Existing installations are unaffected - so your own long-standing dev install will NOT reproduce what new customers experience.",
+      "severity": "high"
+    },
+    {
+      "title": "Marketplace won't approve scopes for unbuilt features",
+      "detail": "Only request scopes for functionality that exists today; add more later via resubmission (up to 6 weeks).",
+      "severity": "medium"
+    },
+    {
+      "title": "Some scopes are not accepted at all",
+      "detail": "The review guide lists broad workspace data access, admin.*, search:read and triggers:* among scopes not allowed.",
+      "severity": "high"
+    },
+    {
+      "title": "Disabling distribution uninstalls everywhere",
+      "detail": "Turning off public distribution removes the app from all workspaces except the original.",
+      "severity": "medium"
+    },
+    {
+      "title": "Token rotation is a one-way switch",
+      "detail": "Once enabled it can't be disabled, and every refresh returns a new single-use refresh token. Decide before launch and serialise refreshes per workspace.",
+      "severity": "medium"
+    }
+  ],
+  "blockers": [
+    {
+      "symptom": "ratelimited errors on conversations.history after onboarding a new customer",
+      "cause": "Unlisted app Tier 1 limit (1 req/min) for new installs.",
+      "next_step": "Back off using Retry-After, switch to Events API ingestion, and prioritise Marketplace submission."
+    },
+    {
+      "symptom": "Can't submit to the Marketplace",
+      "cause": "Fewer than 10 active workspaces.",
+      "next_step": "Run a design-partner programme on unlisted distribution until you reach the threshold."
+    },
+    {
+      "symptom": "Submission returned at preliminary review",
+      "cause": "Missing scope justification, no test credentials, or the reviewer couldn't install.",
+      "next_step": "Fix all feedback in one pass - resubmitting resets the queue position."
+    }
+  ],
+  "agent_can": [
+    "Generate the app manifest with minimum scopes",
+    "Write OAuth, token storage and Events API ingestion code",
+    "Build a rate-limit-aware history backfill queue",
+    "Draft Marketplace scope justifications, listing copy and demo-video script",
+    "Track your active-workspace count against the 10-workspace threshold"
+  ],
+  "you_must": [
+    "Create the app and complete distribution in the Slack UI",
+    "Recruit 10 active workspaces",
+    "Record the demo video and own reviewer correspondence",
+    "Provide reviewers with test accounts"
+  ],
+  "claims": [
+    {
+      "claim": "Unlisted commercially distributed apps get Tier 1 (1 req/min, 15 objects) on conversations.history and conversations.replies for apps created / installed on or after 29 May 2025; existing installs unaffected.",
+      "evidence": "official_docs",
+      "source_url": "https://docs.slack.dev/changelog/2025/05/29/rate-limit-changes-for-non-marketplace-apps",
+      "note": "Checked 2026-11-03."
+    },
+    {
+      "claim": "Internal customer-built apps keep 50+ req/min and up to 1,000 objects.",
+      "evidence": "official_docs",
+      "source_url": "https://docs.slack.dev/changelog/2025/05/29/rate-limit-changes-for-non-marketplace-apps",
+      "note": "Checked 2026-11-03."
+    },
+    {
+      "claim": "Marketplace submission requires 10 or more active workspaces (active in past 28 days).",
+      "evidence": "official_docs",
+      "source_url": "https://docs.slack.dev/slack-marketplace/slack-marketplace-review-guide",
+      "note": "Checked 2026-11-03."
+    },
+    {
+      "claim": "Preliminary review takes up to 10 business days; functional review up to 10 weeks for new apps (6 weeks for updates).",
+      "evidence": "official_docs",
+      "source_url": "https://docs.slack.dev/slack-marketplace/slack-marketplace-review-guide",
+      "note": "Checked 2026-11-03. These are maximums stated by Slack, not observed durations."
+    },
+    {
+      "claim": "Public distribution is activated via a checklist with no review step and requires SSL on redirect/request URLs.",
+      "evidence": "official_docs",
+      "source_url": "https://docs.slack.dev/distribution/",
+      "note": "Checked 2026-11-03."
+    },
+    {
+      "claim": "The authorize endpoint returns an HTML page (HTTP 200) for an invalid client_id rather than an OAuth error redirect.",
+      "evidence": "tested",
+      "source_url": "https://slack.com/oauth/v2/authorize",
+      "note": "Probed with client_id=000.000; error is rendered in-page, so automated checks must parse HTML."
+    },
+    {
+      "claim": "Without token rotation access tokens never expire; with rotation they last 12 hours, refresh tokens are single-use, and rotation cannot be turned off once enabled.",
+      "evidence": "official_docs",
+      "source_url": "https://docs.slack.dev/authentication/using-token-rotation",
+      "note": "Checked 2026-11-04."
+    }
+  ],
+  "open_questions": [
+    "Real Marketplace review durations vary with volume; the figures above are Slack's stated maximums.",
+    "Whether the history limit applies identically to user tokens vs bot tokens was not tested."
+  ],
+  "confidence": "high"
+}

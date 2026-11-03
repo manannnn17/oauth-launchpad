@@ -1,0 +1,105 @@
+{
+  "slug": "linkedin",
+  "source": "curated",
+  "reviewed_on": "2026-11-03",
+  "name": "LinkedIn",
+  "website": "https://www.linkedin.com",
+  "category": "Social / professional network",
+  "summary": "Only three permissions are open to everyone: sign-in (openid/profile/email) and posting as the member (w_member_social). Everything else an agent typically wants - company pages, ads, sales, recruiting data - sits behind partner programmes that LinkedIn must approve, and approval is not guaranteed.",
+  "access_tier": "partner_gated",
+  "difficulty": 5,
+  "difficulty_reason": "Most useful data requires partner approval with no published timeline or guarantee; even the app itself must be verified by a LinkedIn Page super admin.",
+  "effort": {
+    "hands_on": "30-60 min for an app with open permissions; days of paperwork for partner applications",
+    "first_connection": "Same day (open permissions)",
+    "production": "Same day for open permissions; weeks to months - or never - for partner programmes",
+    "waiting_on": "Page super-admin verification of the app (up to 30 days to act), then LinkedIn's partner-programme decisions."
+  },
+  "bottom_line": "Scope your agent to what is open: sign-in, reading the member's basic profile, and posting on their behalf. If your roadmap needs more (company pages, ads, Sales Navigator, Talent), apply now, in parallel with building, and have a product plan that works without it. Associate the app with your real company Page and get it verified on day one - partner applications depend on it.",
+  "app_type": "LinkedIn Developer app (linkedin.com/developers/apps), associated with and verified by a LinkedIn Company Page; products added from the Products tab.",
+  "console_url": "https://www.linkedin.com/developers/apps/new",
+  "scope_paths": [
+    { "name": "Sign in with LinkedIn (OIDC)", "scopes": ["openid", "profile", "email"], "tier": "self_serve", "review": "None - self-service product", "time_to_production": "Same day" },
+    { "name": "Post on the member's behalf", "scopes": ["w_member_social"], "tier": "self_serve", "review": "None - 'Share on LinkedIn' product", "time_to_production": "Same day" },
+    { "name": "Company pages / community management", "scopes": ["Community Management API permissions"], "tier": "partner_gated", "review": "Application and approval by LinkedIn", "time_to_production": "Weeks+; not guaranteed" },
+    { "name": "Advertising / Sales Navigator / Talent", "scopes": ["Advertising API", "r_sales_nav_*", "RSC/Apply Connect"], "tier": "partner_gated", "review": "Partner programme approval", "time_to_production": "Months; not guaranteed" },
+    { "name": "Compliance", "scopes": ["r_compliance", "w_compliance"], "tier": "partner_gated", "review": "Closed - cannot be requested", "time_to_production": "Not available" }
+  ],
+  "prerequisites": [
+    { "item": "LinkedIn Company Page", "needed_for": "development", "detail": "Apps must be associated with a Page; a Page super admin verifies the association." },
+    { "item": "HTTPS absolute redirect URL", "needed_for": "development", "detail": "No fragments (#); query parameters are ignored." },
+    { "item": "Registered business + use-case description", "needed_for": "production", "detail": "Needed for partner programme applications." }
+  ],
+  "stages": [
+    {
+      "name": "Create and verify the app",
+      "goal": "A verified app with client credentials.",
+      "steps": [
+        { "title": "Create the app", "owner": "you", "duration": "10 min", "detail": "Name, company Page, privacy policy URL, logo.", "url": "https://www.linkedin.com/developers/apps/new" },
+        { "title": "Get the Page association verified", "owner": "you", "duration": "Minutes to days", "detail": "Settings > Verify > Generate URL; send it to the Page super admin, who has 30 days to approve. A denial invalidates all generated links.", "url": "https://www.linkedin.com/help/lms/answer/a548360" },
+        { "title": "Add self-serve products", "owner": "you", "duration": "2 min", "detail": "Products tab: 'Sign in with LinkedIn using OpenID Connect' and 'Share on LinkedIn'.", "url": "" }
+      ]
+    },
+    {
+      "name": "Wire up and test",
+      "goal": "Members can sign in and the agent can post for them.",
+      "steps": [
+        { "title": "Add redirect URLs on the Auth tab", "owner": "agent", "duration": "2 min", "detail": "Absolute HTTPS URLs; no '#'.", "url": "https://learn.microsoft.com/en-us/linkedin/shared/authentication/authorization-code-flow" },
+        { "title": "Implement the 3-legged flow", "owner": "agent", "duration": "30 min", "detail": "Code expires in 30 minutes; access tokens last 60 days. No programmatic refresh unless LinkedIn enables it for you - plan a re-consent prompt before expiry.", "url": "" }
+      ]
+    },
+    {
+      "name": "Apply for gated access (if needed)",
+      "goal": "Decision from LinkedIn on partner products.",
+      "steps": [
+        { "title": "Draft the application", "owner": "agent", "duration": "2-4 h", "detail": "Agent drafts use case, data handling and member-value narrative; you review for accuracy.", "url": "https://learn.microsoft.com/en-us/linkedin/shared/authentication/getting-access" },
+        { "title": "Submit via Products tab or partner programme site", "owner": "you", "duration": "30 min", "detail": "Advertising API via Products tab; SNAP and Talent via partner pages.", "url": "" },
+        { "title": "Wait for LinkedIn's decision", "owner": "provider", "duration": "Unpublished - plan for weeks to months", "detail": "No SLA; approval not guaranteed.", "url": "" }
+      ]
+    }
+  ],
+  "token_facts": [
+    { "fact": "Access token lifetime", "value": "60 days" },
+    { "fact": "Programmatic refresh tokens", "value": "Only for a limited set of approved partners" },
+    { "fact": "Authorization code lifetime", "value": "30 minutes" },
+    { "fact": "Changing requested scopes", "value": "Invalidates all previous access tokens for that member" },
+    { "fact": "PKCE in OIDC discovery", "value": "Not advertised" }
+  ],
+  "gotchas": [
+    { "title": "No refresh tokens for most apps", "detail": "Agents holding long-lived connections must re-prompt members roughly every 60 days. Re-auth is silent only if the member is still logged in and the token hasn't expired.", "severity": "high" },
+    { "title": "Scope change kills existing tokens", "detail": "Requesting a different scope set invalidates the member's earlier tokens - roll out scope changes deliberately.", "severity": "medium" },
+    { "title": "Approval is discretionary", "detail": "Partner programmes are not a queue you can wait out. Build value on the open permissions first.", "severity": "high" },
+    { "title": "Old scope names in tutorials", "detail": "r_liteprofile / r_emailaddress are legacy; use openid, profile, email.", "severity": "low" }
+  ],
+  "blockers": [
+    { "symptom": "unauthorized_scope_error / 'Invalid scope'", "cause": "The scope belongs to a product your app doesn't have.", "next_step": "Add the self-serve product, or apply for the gated product." },
+    { "symptom": "Can't request Advertising/Community products", "cause": "App not verified by the Company Page super admin.", "next_step": "Regenerate the verification URL and get the super admin to approve within 30 days." },
+    { "symptom": "Members disconnected after ~60 days", "cause": "Access token expiry without programmatic refresh.", "next_step": "Schedule a re-consent prompt before day 60." }
+  ],
+  "agent_can": [
+    "Tell you which of your features fit open permissions",
+    "Write the OIDC sign-in and posting flow",
+    "Schedule re-consent before token expiry",
+    "Draft partner-programme applications",
+    "Probe the authorise endpoint for client/redirect errors"
+  ],
+  "you_must": [
+    "Own the LinkedIn Company Page and get the app verified by its super admin",
+    "Submit partner applications as the legal business",
+    "Accept LinkedIn API terms"
+  ],
+  "claims": [
+    { "claim": "Open (self-serve) permissions are only profile, email (Sign in with LinkedIn using OpenID Connect) and w_member_social (Share on LinkedIn); most others require approval.", "evidence": "official_docs", "source_url": "https://learn.microsoft.com/en-us/linkedin/shared/authentication/getting-access", "note": "Checked 2026-11-03 (page updated 2026-06-03)." },
+    { "claim": "Compliance permissions are closed and cannot be requested.", "evidence": "official_docs", "source_url": "https://learn.microsoft.com/en-us/linkedin/shared/authentication/getting-access", "note": "Checked 2026-11-03." },
+    { "claim": "Access tokens are issued with a 60-day lifespan; programmatic refresh tokens only for a limited set of partners; auth codes live 30 minutes.", "evidence": "official_docs", "source_url": "https://learn.microsoft.com/en-us/linkedin/shared/authentication/authorization-code-flow", "note": "Checked 2026-11-03." },
+    { "claim": "Redirect URLs must be absolute, cannot contain '#', and query parameters are ignored.", "evidence": "official_docs", "source_url": "https://learn.microsoft.com/en-us/linkedin/shared/authentication/authorization-code-flow", "note": "Checked 2026-11-03." },
+    { "claim": "App must be verified by a Page super admin, who has 30 days to use the URL; a denial invalidates all links.", "evidence": "official_docs", "source_url": "https://www.linkedin.com/help/lms/answer/a548360", "note": "Taken from LinkedIn Help as surfaced by search 2026-11-03; page not fetched directly." },
+    { "claim": "An unknown client_id is rejected on the authorise page with 'client_id is invalid'.", "evidence": "tested", "source_url": "https://www.linkedin.com/oauth/v2/authorization", "note": "Probe returned HTTP 200 'Authorize | LinkedIn' page containing the error text." },
+    { "claim": "LinkedIn's OIDC discovery lists only openid/profile/email scopes and does not advertise PKCE.", "evidence": "tested", "source_url": "https://www.linkedin.com/oauth/.well-known/openid-configuration", "note": "Fetched live 2026-11-03. Absence from discovery doesn't prove PKCE is unsupported for all app types." }
+  ],
+  "open_questions": [
+    "Approval timelines for Community Management and Advertising APIs are not published.",
+    "Whether a placeholder Company Page is acceptable for partner applications is reported by third parties but not confirmed by LinkedIn."
+  ],
+  "confidence": "high"
+}

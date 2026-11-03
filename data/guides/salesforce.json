@@ -1,0 +1,101 @@
+{
+  "slug": "salesforce",
+  "source": "curated",
+  "reviewed_on": "2026-11-03",
+  "name": "Salesforce",
+  "website": "https://www.salesforce.com",
+  "category": "CRM",
+  "summary": "No Salesforce approval is needed to let customer orgs connect, but the ground moved in Spring '26: creating new Connected Apps is disabled by default in all orgs, so new integrations should use External Client Apps (ECAs). Multi-tenant distribution also means packaging the ECA and dealing with each customer's admin policies.",
+  "access_tier": "self_serve_with_caveats",
+  "difficulty": 3,
+  "difficulty_reason": "Self-serve, but ECAs are new, much older tutorials are now wrong, and customer org admins control who may use your app.",
+  "effort": {
+    "hands_on": "1-3 h (ECA + test); more if you package it for distribution",
+    "first_connection": "Same day",
+    "production": "Days (packaging + customer admin approvals); AppExchange security review only if you list there",
+    "waiting_on": "Customer admins' policies (pre-authorisation, IP restrictions); optional AppExchange security review."
+  },
+  "bottom_line": "Use a free Developer Edition org as your 'home' org, create an External Client App with the authorization-code flow + PKCE and the narrowest scopes (api, refresh_token, often id/openid). Ignore tutorials that start with 'New Connected App' - since Spring '26 that path is off by default. Because customer org admins can restrict access, ship a short admin-setup page alongside your connect button.",
+  "app_type": "External Client App (Setup > External Client App Manager) with OAuth settings enabled. Legacy Connected Apps keep working but new ones require a Salesforce Support exception.",
+  "console_url": "https://developer.salesforce.com/signup",
+  "scope_paths": [
+    { "name": "Read/write CRM data via REST", "scopes": ["api", "refresh_token"], "tier": "self_serve_with_caveats", "review": "None from Salesforce; customer admins may need to approve/pre-authorise", "time_to_production": "Days" },
+    { "name": "Identity / sign-in", "scopes": ["openid", "id", "profile", "email"], "tier": "self_serve", "review": "None", "time_to_production": "Same day" },
+    { "name": "Full access", "scopes": ["full"], "tier": "self_serve_with_caveats", "review": "None, but security-conscious admins will push back", "time_to_production": "Days" },
+    { "name": "AppExchange listing", "scopes": ["Any"], "tier": "review_required", "review": "AppExchange security review", "time_to_production": "Weeks (only if you list)" }
+  ],
+  "prerequisites": [
+    { "item": "Salesforce Developer Edition org", "needed_for": "development", "detail": "Free; acts as the org that owns your app." },
+    { "item": "Callback URL (HTTPS)", "needed_for": "development", "detail": "Plus decide whether to support sandbox orgs (test.salesforce.com) and My Domain logins." },
+    { "item": "Customer admin setup instructions", "needed_for": "production", "detail": "Policies like 'Admin approved users are pre-authorized' block users until an admin acts." }
+  ],
+  "stages": [
+    {
+      "name": "Create the External Client App",
+      "goal": "You have a consumer key/secret for an ECA with OAuth enabled.",
+      "steps": [
+        { "title": "Sign up for a Developer Edition org", "owner": "you", "duration": "10 min", "detail": "Email verification required.", "url": "https://developer.salesforce.com/signup" },
+        { "title": "Create a new External Client App", "owner": "you", "duration": "15 min", "detail": "Setup > Quick Find 'External Client App Manager' > New. Enable OAuth, add callback URL, select scopes (api, refresh_token, openid), require PKCE.", "url": "https://help.salesforce.com/s/articleView?id=xcloud.external_client_apps.htm" },
+        { "title": "Set policies and retrieve consumer key/secret", "owner": "you", "duration": "5 min", "detail": "Configure refresh token policy (e.g. valid until revoked) and permitted users; copy credentials.", "url": "" }
+      ]
+    },
+    {
+      "name": "Wire up and test",
+      "goal": "Your agent can call the REST API for a connected org.",
+      "steps": [
+        { "title": "Implement web-server flow with PKCE", "owner": "agent", "duration": "30 min", "detail": "Authorise at https://login.salesforce.com/services/oauth2/authorize (or the user's My Domain / test.salesforce.com for sandboxes). Store instance_url from the token response and call that host.", "url": "https://login.salesforce.com/.well-known/openid-configuration" },
+        { "title": "Test against a sandbox and a My Domain org", "owner": "you", "duration": "20 min", "detail": "Many customers log in via My Domain; make the login host configurable.", "url": "" }
+      ]
+    },
+    {
+      "name": "Distribute to customer orgs",
+      "goal": "Customer users can connect under their admins' policies.",
+      "steps": [
+        { "title": "Package the ECA if you need it installed in subscriber orgs", "owner": "agent", "duration": "1-3 h", "detail": "Local ECAs are not copied into sandboxes or other orgs; packaged ECAs are.", "url": "" },
+        { "title": "Publish an admin setup guide", "owner": "agent", "duration": "30 min", "detail": "Agent drafts steps for admins: approve the app, assign permission sets, relax IP restrictions if needed.", "url": "" }
+      ]
+    }
+  ],
+  "token_facts": [
+    { "fact": "PKCE", "value": "S256 advertised in OIDC discovery" },
+    { "fact": "Refresh token", "value": "Requires the refresh_token (offline_access) scope; lifetime set by app policy" },
+    { "fact": "API host", "value": "Use instance_url returned per org - never hard-code" },
+    { "fact": "Grant types advertised", "value": "authorization_code, refresh_token" }
+  ],
+  "gotchas": [
+    { "title": "New Connected Apps disabled (Spring '26)", "detail": "Creation is off by default in all orgs via UI and API; a temporary Support exception exists but Salesforce says it will be removed. Use ECAs.", "severity": "high" },
+    { "title": "ECAs don't support the username-password flow", "detail": "Use authorization code (users) or JWT bearer / client credentials (server-to-server).", "severity": "medium" },
+    { "title": "Sandbox vs production login hosts", "detail": "Sandbox users authenticate at test.salesforce.com; My Domain users at their own domain.", "severity": "medium" },
+    { "title": "Local ECAs aren't copied to sandboxes", "detail": "Only packaged ECAs survive sandbox refresh/clone.", "severity": "low" }
+  ],
+  "blockers": [
+    { "symptom": "'New Connected App' button missing or creation fails", "cause": "Spring '26 default restriction.", "next_step": "Create an External Client App instead." },
+    { "symptom": "OAUTH_APPROVAL_ERROR_GENERIC / user not approved", "cause": "Customer org policy requires admin pre-authorisation.", "next_step": "Send the admin setup guide; admin assigns the app via profile/permission set." },
+    { "symptom": "invalid_grant: authentication failure for sandbox users", "cause": "Wrong login host.", "next_step": "Use test.salesforce.com or the org's My Domain." }
+  ],
+  "agent_can": [
+    "Pick the minimal scopes and policies",
+    "Write the PKCE web-server flow with configurable login hosts",
+    "Draft the customer admin setup guide",
+    "Translate old Connected App tutorials to ECA equivalents",
+    "Probe OIDC discovery for each customer's My Domain"
+  ],
+  "you_must": [
+    "Sign up for a Developer Edition org and create the ECA",
+    "Store the consumer secret",
+    "Coordinate with customer admins",
+    "Decide whether to pursue AppExchange (security review)"
+  ],
+  "claims": [
+    { "claim": "Spring '26 disables new Connected App creation by default in all orgs, via UI and API; existing Connected Apps keep working.", "evidence": "third_party", "source_url": "https://striim.com/docs/en/salesforce-connected-apps-and-external-client-apps.html", "note": "Checked 2026-11-03 in a vendor's docs that quote Salesforce; Salesforce's own release-note page did not render for our fetcher (CSS error) and developer.salesforce.com returned 403. Search results summarising Salesforce's developer docs agree." },
+    { "claim": "ECAs do not support the PASSWORD (username-password) flow.", "evidence": "third_party", "source_url": "https://striim.com/docs/en/salesforce-connected-apps-and-external-client-apps.html", "note": "Checked 2026-11-03." },
+    { "claim": "Local ECAs are not copied on sandbox clone/refresh; packaged ECAs are.", "evidence": "third_party", "source_url": "https://striim.com/docs/en/salesforce-connected-apps-and-external-client-apps.html", "note": "Checked 2026-11-03." },
+    { "claim": "login.salesforce.com OIDC discovery advertises PKCE S256 and authorization_code + refresh_token grants.", "evidence": "tested", "source_url": "https://login.salesforce.com/.well-known/openid-configuration", "note": "Fetched live 2026-11-03." },
+    { "claim": "No Salesforce review is required for customer orgs to authorise an app; AppExchange security review applies only to listings.", "evidence": "inferred", "source_url": "", "note": "Standard behaviour, not re-checked against a specific Salesforce page in this pass." }
+  ],
+  "open_questions": [
+    "Confirm the ECA creation UI path and default policies directly in a Developer Edition org - not tested here.",
+    "A third-party guide mentions device-flow changes on 30 Nov 2026; not verified against Salesforce docs."
+  ],
+  "confidence": "medium"
+}
