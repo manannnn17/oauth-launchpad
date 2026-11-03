@@ -42,4 +42,20 @@ The most valuable finding is the Slack one. Since 29 May 2025, unlisted distribu
 - **Real review durations.** Slack and Google publish maximums or "can take several months", not distributions. The guides present these as stated ranges, not observed ones.
 - **CASA cost.** It is not published and varies by assessor. It is listed as an open question.
 - **LinkedIn Page verification.** The details (super admin, 30-day window) come from LinkedIn Help, as surfaced by search. The page was not fetched directly.
-- **Live agent against the real API.** The agent loop is covered by an offline test (`npm test`) that uses a scripted Claude client and a real network probe. This build environment had no Anthropic API key, so a live end-to-end generation was not run here. Run `npm run generate -- "Zoom"` with a key to confirm.
+
+## Live agent runs (Gemini 2.5 Flash, 2026-11-04)
+
+Two apps outside the curated library were generated live. Their guides ship in `data/generated/` with human-review notes added to the affected claims.
+
+| App | Run | What the agent got right | What review found |
+|---|---|---|---|
+| **Xero** (CLI, 86s) | 8 searches, 3 probes: OIDC discovery (200), authorise with dummy client, developer console | 30-min access tokens; 60-day rotating refresh tokens; Xero's 2026 ban on using API data for AI/ML training; granular scopes for new apps | **Wrong:** said partner certification is needed for more than 5 connections. Xero's [pricing page](https://developer.xero.com/pricing) ties the 5-connection cap to the free Starter tier, and paid tiers raise it. Also gave "4-8 weeks" for certification while citing a source that says "several months". Both fixed in the guide. |
+| **Zoom** (web UI, 68s, live in browser) | 9 searches, 3 probes. The console URL the agent guessed returned **404**, so it was caught as wrong rather than published. | General App vs Server-to-Server OAuth; mandatory review for public/unlisted apps; PKCE (tested via discovery); 1-hour access tokens | "4-8 weeks" review has no source (the only published figure is ~7 business days, from 2020). The 90-day refresh-token figure is backed only by a third party. Missed the private/beta sharing path. All three are annotated in the guide. |
+
+**What this taught us, and what changed:**
+- The agent's errors were about **what a limit is tied to** (tier vs certification), plus **time estimates without a source**. The research prompt now requires stating what each limit is tied to and what lifts it.
+- **Probes catch hallucinated URLs.** Zoom's guessed console page returned 404, which shows in the guide's research log.
+- **Gemini returned a transient 503 ("high demand")** on one UI run. The Gemini client now retries 429/5xx errors with backoff (3s / 8s / 20s) and shows the retry in the live log.
+- Generated guides need a human-review step before they join the library. A production version would make that a review queue.
+
+Xero's developer docs are rendered with JavaScript and couldn't be fetched directly, so these claims were cross-checked through search results that quote Xero's FAQ and pricing pages.

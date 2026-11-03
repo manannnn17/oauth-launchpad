@@ -50,7 +50,7 @@ npm run generate -- "Zoom"        # run the agent from the CLI (smoke test / pre
 
 ## What's in the library
 
-Six apps were chosen to cover each kind of setup challenge, not just the easy ones:
+Six curated apps were chosen to cover each kind of setup challenge, not just the easy ones:
 
 | App | Tier | Why it's here |
 |---|---|---|
@@ -60,6 +60,8 @@ Six apps were chosen to cover each kind of setup challenge, not just the easy on
 | Salesforce | Self-serve + caveats (3/5) | **Spring '26 disabled new Connected Apps.** Most tutorials are now wrong. |
 | Gmail | Review required (4/5) | Restricted scopes, annual CASA assessment, 100-user cap, 7-day tokens while testing. |
 | LinkedIn | Partner-gated (5/5) | Only sign-in and posting are open. Everything else needs discretionary approval. |
+
+Plus two **agent-generated** guides from live runs, reviewed and annotated: **Xero** (pricing-tier connection caps, AI/ML data-use ban) and **Zoom** (mandatory Marketplace review).
 
 ## Key decisions
 
@@ -86,13 +88,14 @@ Two interchangeable providers produce the same guide format (`agent/index.js` pi
 
 ## Verification
 
-See [docs/VERIFICATION.md](docs/VERIFICATION.md). In summary, the sample's key claims were checked against provider docs and five guides were corrected. Examples: `gmail.metadata` is a *restricted* scope, and GitHub's default org restriction applies to OAuth Apps but not GitHub Apps. The report also lists what couldn't be verified.
+See [docs/VERIFICATION.md](docs/VERIFICATION.md). In summary, the sample's key claims were checked against provider docs and five guides were corrected. Live agent runs on Xero and Zoom were also reviewed: the agent got token and policy facts right, but tied a connection cap to the wrong cause, and its probes caught a hallucinated console URL. Examples: `gmail.metadata` is a *restricted* scope, and GitHub's default org restriction applies to OAuth Apps but not GitHub Apps. The report also lists what couldn't be verified.
 
 ## Limitations
 
 - **Six curated guides, not 100.** The schema, generator and CLI are the path to scaling. A real library would add a review queue before generated guides are promoted.
 - **No real app registrations or approvals.** Steps that need a provider account were researched, not performed.
-- **Live generation hasn't been run against the real API here.** The build environment had no API key. The loop is covered by an offline test with a scripted client. Run `npm run generate -- "<app>"` with a key to confirm it end to end.
+- **Generated guides need review.** Live runs on Xero and Zoom worked end to end but contained errors that human review caught (see VERIFICATION.md). Generated guides are labelled as agent-generated and should be reviewed before being promoted to the library.
+- **Gemini free-tier capacity.** Gemini can return transient 503 "high demand" errors. The client retries with backoff, but a run can still fail during a capacity spike - simply retry.
 - **Guides go stale.** Every guide shows its review or generation date. Generated guides are cached for 7 days. A production version would re-verify on a schedule and diff against the previous version.
 - **Single-node demo server.** There is no auth or per-user rate limiting beyond a concurrency cap of 3, and storage is the filesystem.
 

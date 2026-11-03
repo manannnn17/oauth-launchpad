@@ -163,7 +163,7 @@ async function startGeneration(query, force = false) {
         return;
       case "phase": add(ICON.phase, `<span class="phase">${esc(ev.message)}</span>`); break;
       case "search": add(ICON.search, `Searching <em>${esc(ev.query)}</em>`); break;
-      case "fetch": add(ICON.fetch, `Reading <a href="${safeUrl(ev.url)}" target="_blank" rel="noopener">${esc(ev.url)}</a>`); break;
+      case "fetch": add(ICON.fetch, `Reading <a href="${safeUrl(ev.url)}" target="_blank" rel="noopener">${esc(ev.label || ev.url)}</a>`); break;
       case "probe": add(ICON.probe, `Probing <code>${esc(ev.url)}</code> <span class="muted">- ${esc(ev.purpose)}</span>`); break;
       case "result": add("", `↳ ${esc(ev.message)}`, "res"); break;
       case "writing":
@@ -356,13 +356,21 @@ async function renderGuide(slug) {
   };
 }
 
+// Google grounding sources arrive as redirect URLs; show something readable.
+function sourceLabel(u) {
+  try {
+    const url = new URL(u);
+    return url.hostname.includes("vertexaisearch") ? "Google Search result (via grounding redirect)" : u;
+  } catch { return u; }
+}
+
 function researchLog(g) {
   const log = g.research_log || { searches: [], fetches: [], probes: [] };
   return `<div class="card section">
     <h2>How the agent built this guide</h2>
-    <p class="muted small">Model ${esc(g.model)} · ${esc(g.duration_s)}s · ${log.searches.length} searches · ${log.fetches.length} pages read · ${log.probes.length} live probes · request "${esc(g.query)}"</p>
+    <p class="muted small">Model ${esc(g.model)} · ${esc(g.duration_s)}s · ${log.searches.length} searches · ${log.fetches.length} sources · ${log.probes.length} live probes · request "${esc(g.query)}"</p>
     <details class="log"><summary>Searches</summary><ul>${log.searches.map((s) => `<li>${esc(s)}</li>`).join("")}</ul></details>
-    <details class="log"><summary>Pages read</summary><ul>${log.fetches.map((u) => `<li><a href="${safeUrl(u)}" target="_blank" rel="noopener">${esc(u)}</a></li>`).join("")}</ul></details>
+    <details class="log"><summary>Sources read</summary><ul>${log.fetches.map((u) => `<li><a href="${safeUrl(u)}" target="_blank" rel="noopener">${esc(sourceLabel(u))}</a></li>`).join("")}</ul></details>
     <details class="log"><summary>Live probes (setup attempts without an account)</summary><ul>${log.probes.map((p) => `<li><code>${esc(p.url)}</code> - ${esc(p.purpose)}<br/><span class="muted">${p.result ? `HTTP ${esc(p.result.status)}${p.result.title ? ` · "${esc(p.result.title)}"` : ""}${p.result.oauth_signals?.length ? ` · ${esc(p.result.oauth_signals.join("; "))}` : ""}${p.result.looks_like_login_wall ? " · behind login" : ""}` : `failed: ${esc(p.error)}`}</span></li>`).join("")}</ul></details>
     <details class="log"><summary>Raw research notes</summary><pre class="notes">${esc(g.research_notes)}</pre></details>
   </div>`;

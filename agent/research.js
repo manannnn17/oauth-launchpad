@@ -39,6 +39,8 @@ Attempt what can be attempted without an account using probe_url:
 - the app-registration console URL, to confirm it exists and whether it is behind a login.
 Never sign up, submit forms, or send credentials.
 
+For every limit or requirement you report (user caps, connection caps, rate limits, reviews), state exactly what it is tied to - a pricing tier, an app status, a certification, a scope - and what lifts it. Do not assume a cap is lifted by certification if the source ties it to a plan or tier.
+
 Be efficient: a handful of targeted searches, then fetch the most authoritative pages. Stop when you can answer the questions above or have established they are not documented.
 
 Finish with research notes in plain text:

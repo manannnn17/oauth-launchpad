@@ -13,7 +13,7 @@ const slugify = (s) => s.toLowerCase().replace(/\(.*?\)/g, "").replace(/[^a-z0-9
 
 try {
   const { guide, meta } = await generateGuide(query, (e) => {
-    const text = { phase: e.message, search: `search  ${e.query}`, fetch: `read    ${e.url}`, probe: `probe   ${e.url}`, result: `  -> ${e.message}` }[e.type];
+    const text = { phase: e.message, search: `search  ${e.query}`, fetch: `read    ${e.label || e.url}`, probe: `probe   ${e.url}`, result: `  -> ${e.message}` }[e.type];
     if (text) console.log(text);
   });
   const slug = slugify(guide.name || query);

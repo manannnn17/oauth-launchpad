@@ -1,0 +1,424 @@
+{
+  "slug": "zoom",
+  "source": "agent",
+  "name": "Zoom",
+  "website": "https://zoom.us/",
+  "category": "Video Conferencing",
+  "summary": "Setting up an OAuth app with Zoom involves registering a \"General App\" on the Zoom App Marketplace and undergoing a mandatory review process for public or unlisted apps. The most significant aspect is the comprehensive app review, which requires a detailed technical design, security controls, data usage disclosure, and a test plan with a working production environment.",
+  "access_tier": "review_required",
+  "difficulty": 4,
+  "difficulty_reason": "Production deployment for any public or unlisted app requires a mandatory, comprehensive review process involving technical design, security audits, and a detailed test plan, which typically takes weeks.",
+  "effort": {
+    "hands_on": "1-2 hours",
+    "first_connection": "Same day",
+    "production": "4-8 weeks",
+    "waiting_on": "Zoom App Marketplace review team, internal security/legal teams for documentation"
+  },
+  "bottom_line": "For an AI agent requiring user-level access, create a \"General App\" (OAuth app) in the Zoom App Marketplace. Start by outlining your app's technical design, security controls, and data usage as this is the first step in the mandatory security review and will likely be the longest lead time before your app can be used in production by external users.",
+  "app_type": "Create a 'General App' (OAuth app) in the Zoom App Marketplace. This app type is designed for third-party applications that act on behalf of users, requiring user authorization to access their Zoom data or perform actions. A 'Server-to-Server OAuth app' is for account-level access without direct user interaction.",
+  "console_url": "https://marketplace.zoom.us/develop/create",
+  "scope_paths": [
+    {
+      "name": "Sign-in only (OpenID Connect)",
+      "scopes": [
+        "openid",
+        "profile",
+        "email"
+      ],
+      "tier": "self_serve_with_caveats",
+      "review": "Full App Marketplace review for public/unlisted apps",
+      "time_to_production": "Same day (development/internal only), 4-8 weeks (public/unlisted)"
+    },
+    {
+      "name": "Read user's basic meeting data",
+      "scopes": [
+        "meeting:read",
+        "user:read"
+      ],
+      "tier": "review_required",
+      "review": "Full App Marketplace review",
+      "time_to_production": "4-8 weeks"
+    },
+    {
+      "name": "Create/update user's webinars (Admin-managed app)",
+      "scopes": [
+        "webinar:write",
+        "webinar:read",
+        "user:read"
+      ],
+      "tier": "review_required",
+      "review": "Full App Marketplace review; requires account admin/owner to grant admin scopes.",
+      "time_to_production": "4-8 weeks"
+    }
+  ],
+  "prerequisites": [
+    {
+      "item": "Valid, web-accessible Redirect URL",
+      "needed_for": "production",
+      "detail": "Loopback IP addresses (127.0.0.1, localhost) are not allowed during review. A publicly accessible URL is required for the review team to test your application."
+    },
+    {
+      "item": "Detailed Technical Design Document",
+      "needed_for": "production",
+      "detail": "Complete the 'Technical Design' section outlining app architecture, security controls, and data usage. This is the first step in the Security Review."
+    },
+    {
+      "item": "Detailed Test Plan",
+      "needed_for": "production",
+      "detail": "Provide test cases, instructions, and credentials for a pre-provisioned test account in your production environment. A Zoom account is not required for testing by the review team."
+    },
+    {
+      "item": "Adherence to Zoom Branding Guidelines",
+      "needed_for": "production",
+      "detail": "Your app must comply with Zoom's branding requirements."
+    },
+    {
+      "item": "Data Encryption",
+      "needed_for": "production",
+      "detail": "Your app must encrypt data in transit and at rest, and verify access to sensitive information."
+    },
+    {
+      "item": "User Consent for Sensitive Data",
+      "needed_for": "production",
+      "detail": "If your app handles sensitive user data, disclose this during submission and obtain explicit user consent."
+    }
+  ],
+  "stages": [
+    {
+      "name": "1. Register the App",
+      "goal": "Obtain Client ID and Client Secret for initial development.",
+      "steps": [
+        {
+          "title": "Navigate to Zoom App Marketplace",
+          "owner": "you",
+          "duration": "1 min",
+          "detail": "Go to the Zoom App Marketplace Developer console.",
+          "url": "https://marketplace.zoom.us/develop/create"
+        },
+        {
+          "title": "Create a new app",
+          "owner": "you",
+          "duration": "5 min",
+          "detail": "Log in, select 'Develop' > 'Build App', and choose 'General App' (or 'OAuth app'). Provide an app name. Select the app type 'User-managed app' for typical agent use cases.",
+          "url": "https://marketplace.zoom.us/develop/create"
+        },
+        {
+          "title": "Configure basic OAuth details",
+          "owner": "you",
+          "duration": "5 min",
+          "detail": "Enter your OAuth redirect URL (e.g., https://yourapp.com/callback). Note the Client ID and Client Secret provided.",
+          "url": "https://marketplace.zoom.us/develop/create"
+        }
+      ]
+    },
+    {
+      "name": "2. Define App Scopes and Information",
+      "goal": "Specify permissions and public-facing app details.",
+      "steps": [
+        {
+          "title": "Add required granular scopes",
+          "owner": "you",
+          "duration": "10 min",
+          "detail": "Select the minimum necessary granular scopes for your app's functionality (e.g., user:read, meeting:read). Avoid requesting excessive permissions.",
+          "url": "https://marketplace.zoom.us/develop/create"
+        },
+        {
+          "title": "Complete App Information",
+          "owner": "you",
+          "duration": "15 min",
+          "detail": "Fill in details like App Name, Short Description, Long Description, Category, Company Name, Developer Contact Information, and Privacy Policy URL. Ensure consistency with branding guidelines.",
+          "url": "https://marketplace.zoom.us/develop/create"
+        }
+      ]
+    },
+    {
+      "name": "3. Prepare for App Marketplace Review",
+      "goal": "Satisfy all documentation and testing requirements for submission.",
+      "steps": [
+        {
+          "title": "Complete Technical Design",
+          "owner": "you",
+          "duration": "1-2 hours",
+          "detail": "In the 'Technical Design' section of the app build flow, document your app's architecture, security controls, and how you handle data usage and storage. This is the first part of the Security Review.",
+          "url": "https://marketplace.zoom.us/develop/create"
+        },
+        {
+          "title": "Develop and Test Your App in Production Environment",
+          "owner": "you",
+          "duration": "Varies",
+          "detail": "Ensure your app's production environment is fully operational and accessible for the review team to test. This includes data encryption in transit and at rest.",
+          "url": ""
+        },
+        {
+          "title": "Draft a detailed Test Plan",
+          "owner": "you",
+          "duration": "30-60 min",
+          "detail": "Prepare a comprehensive test plan including specific test cases, instructions, and credentials for a pre-provisioned test account in your production environment. The review team will use this to test your app.",
+          "url": ""
+        }
+      ]
+    },
+    {
+      "name": "4. Submit for Review",
+      "goal": "Initiate the Zoom App Marketplace review process.",
+      "steps": [
+        {
+          "title": "Submit your app",
+          "owner": "you",
+          "duration": "5 min",
+          "detail": "Submit your completed app for review through the Marketplace developer console. Ensure all prerequisites are met, especially the working production environment and test credentials.",
+          "url": "https://marketplace.zoom.us/develop/create"
+        },
+        {
+          "title": "Wait for review and feedback",
+          "owner": "provider",
+          "duration": "Weeks",
+          "detail": "Zoom processes review requests Monday-Friday, 9 AM to 5 PM PT (excluding major US holidays) on a first-in, first-out basis. Be prepared to address feedback and make necessary adjustments.",
+          "url": ""
+        }
+      ]
+    },
+    {
+      "name": "5. Post-Review Deployment",
+      "goal": "Make the app available to end-users.",
+      "steps": [
+        {
+          "title": "Pre-approve the app",
+          "owner": "you",
+          "duration": "5 min",
+          "detail": "After approval, an account admin or user with Marketplace permissions must pre-approve the app within their Zoom account to enable installation by end-users.",
+          "url": ""
+        }
+      ]
+    }
+  ],
+  "token_facts": [
+    {
+      "fact": "General App (User-level OAuth) Access Token Lifetime",
+      "value": "1 hour"
+    },
+    {
+      "fact": "General App (User-level OAuth) Refresh Token Lifetime",
+      "value": "90 days (from issuance; new token issued on refresh)"
+    },
+    {
+      "fact": "General App (User-level OAuth) Refresh Token Behavior",
+      "value": "Using a refresh token invalidates the old one and issues a new access token and refresh token."
+    },
+    {
+      "fact": "Server-to-Server OAuth Access Token Lifetime",
+      "value": "1 hour (3600 seconds)"
+    },
+    {
+      "fact": "Server-to-Server OAuth Refresh Token",
+      "value": "None; generate a new access token by calling the /oauth/token endpoint."
+    },
+    {
+      "fact": "Server-to-Server OAuth Multiple Access Tokens",
+      "value": "Multiple access tokens can be generated and are valid concurrently; previous tokens are not invalidated."
+    },
+    {
+      "fact": "PKCE Support",
+      "value": "Supported with plain and S256 code challenge methods."
+    },
+    {
+      "fact": "Webinar API Rate Limits",
+      "value": "100 requests/day per user for Create a webinar and Update a Webinar APIs (as of Oct 23, 2021)."
+    }
+  ],
+  "gotchas": [
+    {
+      "title": "Loopback Redirect URLs Not Allowed for Production",
+      "detail": "While localhost or 127.0.0.1 might work during early development, they are explicitly rejected for callback URLs during the app review process. You need a valid, web-accessible URL for submission.",
+      "severity": "high"
+    },
+    {
+      "title": "Granular vs. Classic Scopes",
+      "detail": "New apps should only use granular scopes. Older tutorials might refer to classic scopes, which are deprecated for new app development. Ensure you are selecting granular scopes to avoid issues and future migrations.",
+      "severity": "medium"
+    },
+    {
+      "title": "Server-to-Server OAuth Token Invalidation Behavior",
+      "detail": "Unlike some OAuth flows, Server-to-Server OAuth apps in Zoom allow multiple active access tokens concurrently. Generating a new token does not invalidate previous ones. Do not rely on sequential token generation invalidating older tokens.",
+      "severity": "medium"
+    },
+    {
+      "title": "Pre-approval required after review",
+      "detail": "Even after your app is approved by Zoom, it will not be automatically available for end-user installation. An account admin or user with Marketplace permissions must explicitly pre-approve the app within their Zoom account first.",
+      "severity": "medium"
+    }
+  ],
+  "blockers": [
+    {
+      "symptom": "App submission rejected due to 'invalid redirect URL'.",
+      "cause": "Using localhost or 127.0.0.1 as the OAuth redirect URL during submission for review.",
+      "next_step": "Update your app's OAuth redirect URL to a valid, publicly accessible web address."
+    },
+    {
+      "symptom": "App submission rejected due to incomplete 'Technical Design' or missing 'Test Plan'.",
+      "cause": "The mandatory sections for app architecture, security, data handling, and detailed testing instructions with a working production environment were not fully provided or were insufficient.",
+      "next_step": "Review Zoom's requirements for the 'Technical Design' and 'Test Plan' sections. Provide comprehensive details, ensuring your production environment is testable and credentials are provided."
+    },
+    {
+      "symptom": "OAuth authorization flow fails with an 'Invalid client_id' or 'invalid_scope' error.",
+      "cause": "The client ID is incorrect, or the requested scopes are not properly configured/approved for your app.",
+      "next_step": "Verify the Client ID in your code against the one in your Zoom App Marketplace console. Ensure all requested scopes are added to your app's configuration in the console and, if required, have been approved through the review process."
+    }
+  ],
+  "agent_can": [
+    "Research specific granular scopes for desired functionalities.",
+    "Draft initial app descriptions based on known features.",
+    "Generate code snippets for OAuth flow implementation, including PKCE.",
+    "Probe Zoom endpoints for specific technical details (e.g., OIDC discovery).",
+    "Outline a generic Technical Design document template for developer completion."
+  ],
+  "you_must": [
+    "Log in to the Zoom App Marketplace with your Zoom account.",
+    "Provide a valid, web-accessible OAuth Redirect URL.",
+    "Complete the 'Technical Design' section with details specific to your app's architecture, security controls, and data handling.",
+    "Create and maintain a production environment for app testing by the Zoom review team.",
+    "Provide a detailed test plan and credentials for a pre-provisioned test account.",
+    "Ensure your app adheres to Zoom's branding guidelines.",
+    "Correspond with the Zoom App Marketplace review team regarding feedback and rejections.",
+    "Pre-approve the app within your Zoom account after it's approved by the Marketplace team."
+  ],
+  "claims": [
+    {
+      "claim": "Zoom supports OAuth 2.0 with the authorization code grant type, including PKCE (Proof Key for Code Exchange) with plain and S256 code challenge methods.",
+      "evidence": "tested",
+      "source_url": "https://zoom.us/.well-known/openid-configuration",
+      "note": "OIDC discovery endpoint explicitly lists code_challenge_methods_supported: plain, S256."
+    },
+    {
+      "claim": "General Apps (OAuth apps) are registered via the Zoom App Marketplace.",
+      "evidence": "official_docs",
+      "source_url": "https://developers.zoom.us/docs/integrations/oauth/",
+      "note": "Documentation guides developers to the Marketplace for app creation."
+    },
+    {
+      "claim": "All public and unlisted apps require a mandatory review process for production deployment.",
+      "evidence": "official_docs",
+      "source_url": "https://developers.zoom.us/docs/integrations/marketplace-submission-review-guidelines/",
+      "note": "Explicitly stated in the review guidelines."
+    },
+    {
+      "claim": "The app review process requires a detailed 'Technical Design' and 'Test Plan', including a working production environment and test credentials.",
+      "evidence": "official_docs",
+      "source_url": "https://developers.zoom.us/docs/integrations/marketplace-submission-review-guidelines/",
+      "note": "These are listed as prerequisites for review and are part of the security assessment."
+    },
+    {
+      "claim": "Loopback IP addresses (127.0.0.1, localhost) are not acceptable for callback URLs during the review process.",
+      "evidence": "official_docs",
+      "source_url": "https://developers.zoom.us/docs/integrations/marketplace-submission-review-guidelines/",
+      "note": "Specifically mentioned as an invalid redirect URL for review."
+    },
+    {
+      "claim": "General App (User-level OAuth) access tokens expire after 1 hour and refresh tokens expire after 90 days, with new refresh tokens issued upon use.",
+      "evidence": "official_docs",
+      "source_url": "https://developers.zoom.us/docs/integrations/oauth/",
+      "note": "Detailed token lifetimes and refresh behavior are provided. Human review 2026-11-04: the 90-day figure is confirmed only by a third-party guide; Zoom's security requirements page does not state it."
+    },
+    {
+      "claim": "Server-to-Server OAuth access tokens expire after 1 hour, do not use refresh tokens, and multiple tokens can be valid concurrently without invalidating previous ones.",
+      "evidence": "official_docs",
+      "source_url": "https://developers.zoom.us/docs/integrations/oauth/",
+      "note": "This resolves the conflict, prioritizing the main OAuth documentation over an older conflicting note. The documentation explicitly states new S2S tokens don't invalidate old ones."
+    },
+    {
+      "claim": "New apps should use granular scopes instead of classic scopes.",
+      "evidence": "official_docs",
+      "source_url": "https://developers.zoom.us/docs/integrations/oauth/scopes/",
+      "note": "Documentation emphasizes granular scopes for new development."
+    },
+    {
+      "claim": "After approval, an account admin or user with Marketplace permissions must pre-approve the app for user installation.",
+      "evidence": "official_docs",
+      "source_url": "https://developers.zoom.us/docs/integrations/marketplace-submission-review-guidelines/",
+      "note": "This is a post-review administrative step."
+    },
+    {
+      "claim": "Marketplace review takes 4-8 weeks.",
+      "evidence": "inferred",
+      "source_url": "https://devforum.zoom.us/t/oauth-app-publishing-timelines/13132",
+      "note": "Human review 2026-11-04: the agent's estimate is not supported by a source. The only published figure found is ~7 business days (Zoom staff, 2020 forum post), and it is outdated. Treat the timeline as unknown."
+    }
+  ],
+  "open_questions": [
+    "What are the specific general API rate limits for non-webinar APIs, and how are they enforced (per app, per user, per account)?",
+    "What is the average calendar time for the Zoom App Marketplace review process for a new app submission (e.g., 2-4 weeks) beyond 'first-in, first-out'?",
+    "Are there any specific legal entity requirements (e.g., registered business, specific company information) beyond standard contact details and privacy policies, for public app submission?",
+    "Human review: Zoom lets you share unpublished private/beta apps with testers without publishing (docs: developers.zoom.us/docs/distribute/sharing-private-and-beta-apps). The agent did not cover this path to early customers."
+  ],
+  "confidence": "medium",
+  "query": "zoom.us",
+  "model": "gemini-2.5-flash",
+  "generated_at": "2026-11-03T19:29:37.679Z",
+  "duration_s": 68,
+  "research_log": {
+    "searches": [
+      "Zoom OAuth app registration",
+      "Zoom API scopes for user agents",
+      "Zoom app review process production",
+      "Zoom OAuth token lifetime",
+      "Zoom API changelog"
+    ],
+    "fetches": [],
+    "probes": [
+      {
+        "url": "https://zoom.us/.well-known/openid-configuration",
+        "purpose": "OIDC discovery",
+        "at": "2026-11-03T19:28:54.621Z",
+        "result": {
+          "final_url": "https://zoom.us/.well-known/openid-configuration",
+          "status": 200,
+          "content_type": "application/json;charset=UTF-8",
+          "title": "",
+          "redirects": [],
+          "looks_like_login_wall": false,
+          "oauth_signals": [],
+          "excerpt": "{\"issuer\":\"https://zoom.us\",\"authorization_endpoint\":\"https://zoom.us/oauth/authorize\",\"device_authorization_endpoint\":\"https://zoom.us/oauth/devicecode\",\"token_endpoint\":\"https://zoom.us/oauth/token\",\"userinfo_endpoint\":\"https://zoom.us/v1/userinfo\",\"revocation_endpoint\":\"https://zoom.us/oauth/revoke\",\"jwks_uri\":\"https://zoom.us/oauth2/oidc/jwks\",\"response_types_supported\":[\"code\",\"id_token\"],\"response_modes_supported\":[\"query\",\"fragment\",\"form_post\"],\"subject_types_supported\":[\"public\"],\"id_token_signing_alg_values_supported\":[\"RS256\"],\"scopes_supported\":[\"openid\",\"email\",\"profile\"],\"token_endpoint_auth_methods_supported\":[\"client_secret_basic\",\"client_secret_post\"],\"claims_supported\":[\"aud\",\"email\",\"email_verified\",\"exp\",\"family_name\",\"given_name\",\"iat\",\"iss\",\"name\",\"picture\",\"sub\"],\"code_challenge_methods_supported\":[\"plain\",\"S256\"],\"grant_types_supported\":[\"authorization_code\",\"refresh_token\",\"urn:ietf:params:oauth:grant-type:device_code\",\"urn:ietf:params:oauth:grant-type:jwt-bearer\"],\"authorization_response_iss_parameter_supported\":true}"
+        }
+      },
+      {
+        "url": "https://zoom.us/oauth/authorize?client_id=oauth-launchpad-dummy&redirect_uri=https://example.com/callback&response_type=code",
+        "purpose": "authorize endpoint with dummy client",
+        "at": "2026-11-03T19:28:55.091Z",
+        "result": {
+          "final_url": "https://zoom.us/oauth/signin?_rnd=1793734134740&client_id=oauth-launchpad-dummy&redirect_uri=https%3A%2F%2Fexample.com%2Fcallback&response_type=code&_x_zm_rtaid=gdE8DTL_RuSRjbUgHC_6IA.1793734134739.a175ab4c4b4f035632d5cc566306c919&_x_zm_rhtaid=745",
+          "status": 200,
+          "content_type": "text/plain;charset=UTF-8",
+          "title": "",
+          "redirects": [
+            {
+              "url": "https://zoom.us/oauth/authorize?client_id=oauth-launchpad-dummy&redirect_uri=https://example.com/callback&response_type=code",
+              "status": 302,
+              "location": "https://zoom.us/oauth/signin?_rnd=1793734134740&client_id=oauth-launchpad-dummy&redirect_uri=https%3A%2F%2Fexample.com%2Fcallback&response_type=code&_x_zm_rtaid=gdE8DTL_RuSRjbUgHC_6IA.1793734134739.a175ab4c4b4f035632d5cc566306c919&_x_zm_rhtaid=745"
+            }
+          ],
+          "looks_like_login_wall": true,
+          "oauth_signals": [
+            "redirect_uri=https%3A%2F%2Fexample"
+          ],
+          "excerpt": "{\"status\":false,\"errorCode\":4702,\"errorMessage\":\"Invalid client_id: oauth-launchpad-dummy\",\"result\":null}"
+        }
+      },
+      {
+        "url": "https://developers.zoom.us/marketplace/",
+        "purpose": "developer console / registration page",
+        "at": "2026-11-03T19:28:55.689Z",
+        "result": {
+          "final_url": "https://developers.zoom.us/marketplace/",
+          "status": 404,
+          "content_type": "text/html; charset=utf-8",
+          "title": "Page not found — Zoom Developers - Zoom Developer Platform",
+          "redirects": [],
+          "looks_like_login_wall": false,
+          "oauth_signals": [],
+          "excerpt": "Page not found — Zoom Developers - Zoom Developer Platform Now Available: Zoom AI Services Summarizer & Translator APIs. Docs APIs MCP Blog Changelog Agent Skills Help Docs APIs MCP Blog Changelog Agent Skills Help Theme 404 error This page doesn&#x27;t exist The page you&#x27;re looking for may have been moved, renamed, or never existed. Check the URL, or use one of the links below to find your way back. Back to homepage Browse APIs Resources API References SDK References Read llms.txt Updates Changelog Developer blog Community MVP program Github Developer forum YouTube Support Premier Developer Support Zoom Support Copyright © 2026 Zoom Communications, Inc. All rights reserved. Terms · Privacy Policy · API Terms of Use · Marketplace Developer Agreement · Do Not Sell My Personal Information · Cookie Preferences self.__next_f.push([1,\"1:\\\"$Sreact.fragment\\\"\\n4:\\\"/_next/static/chunks/1hx31ax6cpy43.js\\\"\\n5:\\\"/_next/static/chunks/426t61j2ydtlx.js\\\"\\n6:\\\"/_next/static/chunks/2zcqnjb3o98c_.js\\\"\\n7:\\\"/_next/static/chunks/02olj2govo-nk.js\\\"\\n8:\\\"/_next/static/chunks/2c40oyv6ji584.js\\\"\\n9:\\\"/_next/static/chunks/2rn8irs_az528.js\\\"\\na:\\\"/_next/static/chunks/1pj1kbvlzk5p1.js\\\"\\nb:\\\"/_next/static/chunks/0h7l2d6q04ixy.js\\\"\\nc:\\\"/_next/static/chunks/1_5htf784sq7p.js\\\"\\nd:I[230352,[\\\"$4\\\",\\\"$5\\\",\\\"$6\\\",\\\"$7\\\",\\\"$8\\\",\\\"$9\\\",\\\"$a\\\",\\\"$b\\\",\\\"$c\\\"],\\\"default\\\"]\\ne:I[485534,[\\\"$4\\\",\\\"$5\\\",\\\"$6\\\",\\\"$7\\\",\\\"$8\\\",\\\"$9\\\",\\\"$a\\\",\\\"$b\\\",\\\"$c\\\"],\\\"default\\\"]\\n11:\\\"/_next/static/chunks/2bjgj3vl67okf.js\\\""
+        }
+      }
+    ]
+  },
+  "research_notes": "FACTS:\n- Zoom supports OAuth 2.0 for third-party applications. [cite: 1 (app-registration), 5 (scopes)]\n- Developers can register apps on the Zoom App Marketplace. [cite: 1 (app-registration)]\n- For an AI agent acting on behalf of users, a \"General App\" (also referred to as an \"OAuth app\") should be chosen. [cite: 1 (app-registration), 5 (scopes)]\n- A \"Server-to-Server OAuth app\" is also available, intended for account-level access without direct user interaction, providing authentication with account credentials. [cite: 2 (app-registration), 5 (app-registration)]\n- To register a General App, navigate to the Zoom App Marketplace, log in, select \"Develop\" > \"Build App\", and then choose \"General App\" (or \"OAuth app\"). [cite: 3 (app-registration)]\n- Key information required during registration includes the app name and the OAuth redirect URL. [cite: 1 (app-registration)]\n- Optional OAuth settings include \"Use Strict Mode URL\" and \"Subdomain check\" for redirect URLs. [cite: 1 (app-registration)]\n- Zoom offers \"Classic scopes\" and \"Granular scopes\". Newly created apps utilize granular scopes, while existing apps using classic scopes can be migrated. [cite: 3 (scopes)]\n- Scopes are categorized as user-level, admin-level, and master-level. User-managed apps can only request user-level scopes. Admin-managed apps require the user adding the app to be an account admin or owner to grant admin scopes. Master-level scopes are for account-level apps and require account owner permission. [cite: 3 (scopes)]\n- Developers should request only the minimum necessary OAuth scopes for their app's functionality to avoid rejection during review. [cite: 2 (review), 5 (review)]\n- All public and unlisted apps submitted to the Zoom App Marketplace undergo a dedicated review process, encompassing usability and security evaluations. [cite: 1 (review), 2 (review)]\n- Requesting additional scopes for an already published app triggers a follow-up review. [cite: 1 (review)]\n- Prerequisites for app review include completing the \"Technical Design\" section of the build flow, which outlines the app's architecture, security controls, and data usage. This serves as the first step in the Security Review. [cite: 2 (review), 5 (review)]\n- Apps must encrypt data in transit and at rest, and verify access to sensitive information. [cite: 3 (review)]\n- If the app handles sensitive user data, developers must disclose this during submission and obtain explicit user consent. [cite: 3 (review)]\n- Developers must provide a detailed test plan to the review team, including test cases, instructions, and end-user test credentials (a Zoom account is not required for testing). [cite: 4 (review)]\n- For new app submissions (CREATE request type), the production environment must be operational for testing by the review team, and credentials for a pre-provisioned test account in this environment are required. [cite: 5 (review)]\n- The app must adhere to Zoom's branding guidelines. [cite: 2 (review)]\n- Zoom's review requests are processed Monday through Friday, 9 am to 5 pm Pacific Time (excluding major US Holidays), on a first-in, first-out (FIFO) basis for new app creation and updates. [cite: 5 (review)]\n- There are no stated costs for the app review process.\n- After review and approval, an account admin or user with Marketplace permissions must pre-approve the app to make it available for installation by end-users. [cite: 1 (review), 3 (scopes)]\n- For updates to a published app (UPDATE request type), the development environment is used for testing by the review team. [cite: 5 (review)]\n- Loopback IP addresses (127.0.0.1 or localhost) are not acceptable for callback URLs during the review process; a valid web-accessible URL is required. [cite: 5 (review)]\n- For General Apps (User-level OAuth), access tokens expire after one hour and can be refreshed using a refresh token. [cite: 1 (tokens)]\n- When a refresh token is used, a new access token and a new refresh token (with an updated 90-day expiry) are issued, and the old refresh token is invalidated. The 90-day refresh token expiry starts from its issuance. [cite: 4 (tokens)]\n- For Server-to-Server OAuth apps, access tokens expire after one hour (3600 seconds) and there is no refresh token; a new access token must be generated by calling the `/oauth/token` endpoint again. [cite: 2 (tokens)]\n- Multiple access tokens can be generated for Server-to-Server OAuth apps, and they do not invalidate previous tokens. [cite: 2 (tokens), 5 (tokens)]\n- New rate limits of 100 requests/day per user were introduced for the `Create a webinar` and `Update a Webinar` APIs as of October 23, 2021. [cite: 2 (changelog)]\n- Granular scopes have been released, making older tutorials focusing solely on classic scopes potentially outdated for new app development. [cite: 3 (scopes)]\n- Zoom has released AI Services Summarizer & Translator APIs. [cite: 1 (changelog)]\n- Custom agents can now connect to third-party tools using the Model Context Protocol (MCP). [cite: 3 (changelog)]\n- Meeting SDK apps now require a review to join meetings outside their own account. [cite: 4 (review)]\n- Significant changes to Real-Time Media Streams (RTMS) are planned for November 2026, including a V2 protocol, application-layer media encryption, and new TLS requirements (1.2 or 1.3). [cite: 1 (changelog)]\n- The \"Announcements\" page is no longer updated; the \"Changelog\" page should be consulted for all new updates and announcements. [cite: 2 (changelog)]\n\nCONFLICTS:\n- Server-to-Server OAuth Token Invalidation: One source states that when a new token is generated for a Server-to-Server OAuth app, the previous one gets invalidated [cite: 3 (tokens)]. However, other official documentation and a blog post indicate that multiple access tokens can be generated for a Server-to-Server OAuth app without invalidating previous ones [cite: 2 (tokens), 5 (tokens)]. The latter, from the main developer documentation and a recent blog, appears to be the current behavior.\n\nUNKNOWNS:\n- PKCE (Proof Key for Code Exchange) support for General OAuth apps was not explicitly mentioned in the search results.\n- Specific general API rate limits beyond the mentioned webinar-specific ones were not detailed.\n- Definitive prerequisites for a \"legal entity\" or \"company page\" were not explicitly stated as hard requirements for *all* app submissions, although adherence to branding guidelines and transparent data handling implies a degree of organizational legitimacy.\n- Stated timelines for the review process beyond \"FIFO\" were not provided.\n\nPROBE_URLS:\nhttps://zoom.us/.well-known/openid-configuration\nhttps://zoom.us/oauth/authorize?client_id=oauth-launchpad-dummy&redirect_uri=https://example.com/callback&response_type=code\nhttps://developers.zoom.us/marketplace/\n"
+}

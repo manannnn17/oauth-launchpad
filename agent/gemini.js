@@ -32,7 +32,24 @@ export class GeminiError extends Error {
   }
 }
 
-async function generate(body, timeoutMs = 240_000) {
+const RETRYABLE = new Set([429, 500, 502, 503, 504]);
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+
+// Retries transient overload/rate errors (Gemini returns 503 under high demand).
+async function generate(body, emit, timeoutMs = 240_000) {
+  const delays = [3_000, 8_000, 20_000];
+  for (let attempt = 0; ; attempt++) {
+    try {
+      return await generateOnce(body, timeoutMs);
+    } catch (err) {
+      if (!(err instanceof GeminiError) || !RETRYABLE.has(err.status) || attempt >= delays.length) throw err;
+      emit?.({ type: "result", message: `Gemini busy (HTTP ${err.status}) - retrying in ${delays[attempt] / 1000}s` });
+      await sleep(delays[attempt]);
+    }
+  }
+}
+
+async function generateOnce(body, timeoutMs) {
   const res = await fetch(`${API}/models/${encodeURIComponent(MODEL())}:generateContent`, {
     method: "POST",
     headers: { "content-type": "application/json", "x-goog-api-key": process.env.GEMINI_API_KEY },
@@ -58,7 +75,7 @@ async function research(query, log, emit) {
       },
     ],
     tools: [{ google_search: {} }, { url_context: {} }],
-  });
+  }, emit);
 
   // Surface what the model actually searched and read.
   const grounding = candidate.groundingMetadata ?? {};
@@ -66,13 +83,17 @@ async function research(query, log, emit) {
     log.searches.push(q);
     emit({ type: "search", query: q });
   }
+  // Grounding chunks link through Google redirect URLs; their title is the source domain.
   const read = [
-    ...(candidate.urlContextMetadata?.urlMetadata ?? []).map((m) => m.retrievedUrl),
-    ...(grounding.groundingChunks ?? []).map((c) => c.web?.title && c.web?.uri ? `${c.web.title} (${c.web.uri})` : c.web?.uri),
-  ].filter(Boolean);
-  for (const u of [...new Set(read)]) {
-    log.fetches.push(u);
-    emit({ type: "fetch", url: u });
+    ...(candidate.urlContextMetadata?.urlMetadata ?? []).map((m) => ({ url: m.retrievedUrl, label: m.retrievedUrl })),
+    ...(grounding.groundingChunks ?? []).map((c) => ({ url: c.web?.uri, label: c.web?.title || c.web?.uri })),
+  ].filter((r) => r.url);
+  const seen = new Set();
+  for (const r of read) {
+    if (seen.has(r.label)) continue;
+    seen.add(r.label);
+    log.fetches.push(r.url);
+    emit({ type: "fetch", url: r.url, label: r.label });
   }
   emit({ type: "result", message: `${log.searches.length} searches, ${log.fetches.length} sources` });
   if (!text.trim()) throw new GeminiError(200, `Research returned no notes (finish reason ${candidate.finishReason})`);
@@ -100,7 +121,7 @@ async function probeAll(notes, log, emit) {
   }
 }
 
-async function structure(query, notes, log) {
+async function structure(query, notes, log, emit) {
   const probeSummary = log.probes.map((p) => ({ url: p.url, purpose: p.purpose, result: p.result ?? { error: p.error } }));
   const { text, candidate } = await generate({
     systemInstruction: { parts: [{ text: STRUCTURE_SYSTEM }] },
@@ -111,7 +132,7 @@ async function structure(query, notes, log) {
       },
     ],
     generationConfig: { responseMimeType: "application/json", responseJsonSchema: GUIDE_SCHEMA, maxOutputTokens: 32000 },
-  });
+  }, emit);
   if (candidate.finishReason === "MAX_TOKENS") throw new GeminiError(200, "Guide output was truncated.");
   return JSON.parse(text);
 }
@@ -128,7 +149,7 @@ export async function generateGuideGemini(query, emit) {
 
   emit({ type: "phase", phase: "structure", message: "Turning findings into a guide" });
   emit({ type: "writing", chars: 0 });
-  const guide = await structure(query, notes, log);
+  const guide = await structure(query, notes, log, emit);
 
   return {
     guide,

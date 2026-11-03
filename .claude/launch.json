@@ -4,7 +4,7 @@
     {
       "name": "oauth-launchpad",
       "runtimeExecutable": "node",
-      "runtimeArgs": ["server.js"],
+      "runtimeArgs": ["--env-file-if-exists=.env", "server.js"],
       "port": 3000
     }
   ]
